@@ -1,0 +1,6 @@
+{
+  "name": "Portal Misi 7 Kebiasaan Anak Indonesia Hebat",
+  "description": "Aplikasi Pemantauan & Gamifikasi 7 Kebiasaan Anak Indonesia Hebat (Siswa, Guru, Kepsek/Admin)",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
