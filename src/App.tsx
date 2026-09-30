@@ -6,10 +6,12 @@
 import React, { useState, useEffect } from 'react';
 import { User, SchoolInfo, Submission, QuizQuestion, Habit } from './types';
 import { storage } from './utils/storage';
+import { firestoreStorage } from './utils/firestoreStorage';
 import { LoginView } from './components/LoginView';
 import { AdminView } from './components/AdminView';
 import { TeacherView } from './components/TeacherView';
 import { StudentView } from './components/StudentView';
+import { PortalDashboard } from './components/PortalDashboard';
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -20,6 +22,44 @@ export default function App() {
   const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('theme') === 'dark';
   });
+
+  // Attach Firestore real-time subscriptions
+  useEffect(() => {
+    const unsubSchool = firestoreStorage.subscribeSchoolInfo((info) => {
+      setSchoolInfo(info);
+      storage.saveSchoolInfo(info);
+    });
+
+    const unsubUsers = firestoreStorage.subscribeUsers((updatedUsers) => {
+      setUsers(updatedUsers);
+      storage.saveUsers(updatedUsers);
+      // Keep currentUser state in sync if user points/details change
+      if (currentUser) {
+        const freshUser = updatedUsers.find((u) => u.id === currentUser.id);
+        if (freshUser) {
+          setCurrentUser(freshUser);
+          storage.setCurrentUser(freshUser);
+        }
+      }
+    });
+
+    const unsubSubs = firestoreStorage.subscribeSubmissions((subs) => {
+      setSubmissions(subs);
+      storage.saveSubmissions(subs);
+    });
+
+    const unsubQuizzes = firestoreStorage.subscribeQuizzes((qList) => {
+      setQuizzes(qList);
+      storage.saveQuizzes(qList);
+    });
+
+    return () => {
+      unsubSchool();
+      unsubUsers();
+      unsubSubs();
+      unsubQuizzes();
+    };
+  }, []);
 
   // Apply dark mode class to root HTML
   useEffect(() => {
@@ -54,16 +94,23 @@ export default function App() {
   const handleUpdateSchoolInfo = (info: SchoolInfo) => {
     setSchoolInfo(info);
     storage.saveSchoolInfo(info);
+    firestoreStorage.saveSchoolInfo(info);
   };
 
   const handleUpdateUsers = (newUsers: User[]) => {
     setUsers(newUsers);
     storage.saveUsers(newUsers);
+    firestoreStorage.saveUsers(newUsers);
   };
 
   const handleUpdateSubmissions = (newSubs: Submission[]) => {
     setSubmissions(newSubs);
     storage.saveSubmissions(newSubs);
+    if (newSubs.length === 0) {
+      firestoreStorage.clearAllSubmissions();
+    } else {
+      firestoreStorage.saveSubmissions(newSubs);
+    }
   };
 
   const handleDeleteSubmission = (subId: string) => {
@@ -73,6 +120,7 @@ export default function App() {
     const updatedSubs = submissions.filter((s) => s.id !== subId);
     setSubmissions(updatedSubs);
     storage.saveSubmissions(updatedSubs);
+    firestoreStorage.deleteSubmission(subId);
 
     // If deleted sub belongs to current user or student, adjust points
     const targetStudent = users.find((u) => u.id === subToDelete.studentId);
@@ -90,12 +138,14 @@ export default function App() {
       const updatedUsersList = users.map((u) => (u.id === updatedUser.id ? updatedUser : u));
       setUsers(updatedUsersList);
       storage.saveUsers(updatedUsersList);
+      firestoreStorage.saveUser(updatedUser);
     }
   };
 
   const handleUpdateQuizzes = (newQuizzes: QuizQuestion[]) => {
     setQuizzes(newQuizzes);
     storage.saveQuizzes(newQuizzes);
+    firestoreStorage.saveQuizzes(newQuizzes);
   };
 
   // Student habit completion handler
@@ -130,6 +180,7 @@ export default function App() {
     const updatedSubmissions = [newSub, ...submissions];
     setSubmissions(updatedSubmissions);
     storage.saveSubmissions(updatedSubmissions);
+    firestoreStorage.addSubmission(newSub);
 
     // Update user points
     const updatedUser = {
@@ -142,63 +193,59 @@ export default function App() {
     const updatedUsersList = users.map((u) => (u.id === updatedUser.id ? updatedUser : u));
     setUsers(updatedUsersList);
     storage.saveUsers(updatedUsersList);
+    firestoreStorage.saveUser(updatedUser);
   };
 
   return (
-    <div className="min-h-screen bg-bright-yellow-blue text-slate-900 selection:bg-yellow-300">
-      {/* Floating View Switcher Bar (For testing & immediate review between all 4 uploaded screens) */}
-      <div className="bg-slate-900 text-white text-xs font-bold py-2 px-4 flex flex-wrap items-center justify-between border-b border-slate-800 gap-2 sticky top-0 z-40">
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span className="font-extrabold text-yellow-300 font-heading text-sm">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 antialiased">
+      {/* Sleek Minimalist Quick View Switcher Bar for App Testing */}
+      <div className="bg-slate-900 text-slate-200 text-xs py-1.5 px-3 sm:px-4 flex items-center justify-between border-b border-slate-800 gap-2 sticky top-0 z-50 shadow-sm no-print overflow-x-auto">
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span className="hidden sm:inline font-semibold text-slate-200 text-xs">
             Portal 7 Kebiasaan Anak Indonesia Hebat
           </span>
-          <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
+          <span className="sm:hidden font-bold text-slate-200 text-xs">
+            Demo Portal
+          </span>
+          <span className="hidden md:inline text-[10px] text-slate-400 border-l border-slate-700 pl-2">
             {schoolInfo.schoolName}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {/* Theme Toggle Button */}
-          <button
-            onClick={() => setIsDarkMode(!isDarkMode)}
-            className="px-2.5 py-1 rounded-lg text-[11px] font-black bg-slate-800 text-yellow-300 border border-slate-700 hover:bg-slate-700 transition-colors flex items-center gap-1 mr-1"
-          >
-            {isDarkMode ? '🌙 Mode Gelap' : '☀️ Mode Terang'}
-          </button>
-
-          <span className="text-[10px] uppercase text-slate-400 font-bold mr-1">Switch Menu:</span>
+        <div className="flex items-center gap-1 sm:gap-1.5 text-xs shrink-0">
+          <span className="hidden sm:inline text-[10px] uppercase text-slate-400 font-semibold mr-0.5">Peran:</span>
           <button
             onClick={() => handleLogout()}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-colors ${
-              !currentUser ? 'bg-yellow-400 text-slate-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+              !currentUser ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            1. Login
+            Login
           </button>
           <button
             onClick={() => handleLogin(users.find((u) => u.role === 'admin') || users[6])}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-colors ${
-              currentUser?.role === 'admin' ? 'bg-yellow-400 text-slate-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+              currentUser?.role === 'admin' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            2. Admin (Kepsek)
+            Admin
           </button>
           <button
             onClick={() => handleLogin(users.find((u) => u.role === 'guru') || users[4])}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-colors ${
-              currentUser?.role === 'guru' ? 'bg-yellow-400 text-slate-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+              currentUser?.role === 'guru' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            3. Guru
+            Guru
           </button>
           <button
             onClick={() => handleLogin(users.find((u) => u.role === 'siswa') || users[0])}
-            className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-colors ${
-              currentUser?.role === 'siswa' ? 'bg-yellow-400 text-slate-900' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+            className={`px-2 sm:px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors ${
+              currentUser?.role === 'siswa' ? 'bg-sky-600 text-white' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
             }`}
           >
-            4. Siswa
+            Siswa
           </button>
         </div>
       </div>
@@ -212,28 +259,18 @@ export default function App() {
         />
       )}
 
-      {currentUser?.role === 'admin' && (
-        <AdminView
-          user={currentUser}
-          schoolInfo={schoolInfo}
-          users={users}
-          submissions={submissions}
-          onLogout={handleLogout}
-          onUpdateSchoolInfo={handleUpdateSchoolInfo}
-          onUpdateUsers={handleUpdateUsers}
-          onUpdateSubmissions={handleUpdateSubmissions}
-          onDeleteSubmission={handleDeleteSubmission}
-        />
-      )}
-
-      {currentUser?.role === 'guru' && (
-        <TeacherView
-          user={currentUser}
+      {(currentUser?.role === 'admin' || currentUser?.role === 'guru') && (
+        <PortalDashboard
+          currentUser={currentUser}
           schoolInfo={schoolInfo}
           users={users}
           submissions={submissions}
           quizzes={quizzes}
+          isDarkMode={isDarkMode}
+          onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
           onLogout={handleLogout}
+          onUpdateSchoolInfo={handleUpdateSchoolInfo}
+          onUpdateUsers={handleUpdateUsers}
           onUpdateSubmissions={handleUpdateSubmissions}
           onUpdateQuizzes={handleUpdateQuizzes}
           onDeleteSubmission={handleDeleteSubmission}
@@ -243,6 +280,7 @@ export default function App() {
       {currentUser?.role === 'siswa' && (
         <StudentView
           user={currentUser}
+          schoolInfo={schoolInfo}
           submissions={submissions}
           quizzes={quizzes}
           onLogout={handleLogout}

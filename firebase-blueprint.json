@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "SchoolInfo": {
+      "title": "SchoolInfo",
+      "description": "School configuration and identity details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 200 },
+        "npsn": { "type": "string", "maxLength": 50 },
+        "address": { "type": "string", "maxLength": 500 },
+        "headmaster": { "type": "string", "maxLength": 200 },
+        "logoUrl": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["name", "npsn", "address", "headmaster"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile for admin, teacher, or student agent",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "username": { "type": "string", "maxLength": 100 },
+        "password": { "type": "string", "maxLength": 100 },
+        "name": { "type": "string", "maxLength": 200 },
+        "role": { "type": "string", "enum": ["admin", "teacher", "student"] },
+        "class": { "type": "string", "maxLength": 100 },
+        "points": { "type": "number" },
+        "avatar": { "type": "string", "maxLength": 1000 }
+      },
+      "required": ["id", "username", "name", "role", "points"]
+    },
+    "Submission": {
+      "title": "Submission",
+      "description": "Habit mission submission report by student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "studentId": { "type": "string", "maxLength": 128 },
+        "studentName": { "type": "string", "maxLength": 200 },
+        "class": { "type": "string", "maxLength": 100 },
+        "habitId": { "type": "string", "maxLength": 50 },
+        "date": { "type": "string", "maxLength": 20 },
+        "completedAt": { "type": "string", "maxLength": 50 },
+        "note": { "type": "string", "maxLength": 2000 },
+        "photoUrl": { "type": "string", "maxLength": 5000 },
+        "pointsEarned": { "type": "number" },
+        "isVerified": { "type": "boolean" },
+        "verifiedBy": { "type": "string", "maxLength": 200 },
+        "teacherFeedback": { "type": "string", "maxLength": 2000 }
+      },
+      "required": ["id", "studentId", "studentName", "habitId", "date", "pointsEarned"]
+    },
+    "Quiz": {
+      "title": "Quiz",
+      "description": "Daily habit quiz challenge question",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "habitId": { "type": "string", "maxLength": 50 },
+        "question": { "type": "string", "maxLength": 1000 },
+        "options": { "type": "array" },
+        "correctOptionIndex": { "type": "number" }
+      },
+      "required": ["id", "habitId", "question", "options", "correctOptionIndex"]
+    }
+  },
+  "firestore": {
+    "/school_info/{infoId}": {
+      "schema": { "$ref": "#/entities/SchoolInfo" },
+      "description": "School branding and headmaster details"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Registered app accounts"
+    },
+    "/submissions/{submissionId}": {
+      "schema": { "$ref": "#/entities/Submission" },
+      "description": "Daily habit mission submissions"
+    },
+    "/quizzes/{quizId}": {
+      "schema": { "$ref": "#/entities/Quiz" },
+      "description": "Habit quiz questions"
+    }
+  }
+}

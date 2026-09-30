@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { SchoolInfo, User } from '../types';
 import {
-  Sparkles,
   Play,
   CheckCircle2,
   Lock,
   Eye,
   EyeOff,
   UserCheck,
-  School,
-  BadgeCheck,
   Clock,
   HelpCircle,
   LogIn,
@@ -64,25 +61,18 @@ export const LoginView: React.FC<LoginViewProps> = ({
       setCurrentTime(`${hours}:${minutes} WIB`);
     };
     updateClock();
-    const timer = setInterval(updateClock, 30000);
-    return () => clearInterval(timer);
+    const interval = setInterval(updateClock, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => {
-      setToastMessage((prev) => (prev === msg ? null : prev));
-    }, 3500);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-
-    if (!usernameInput.trim()) {
-      setErrorMessage('Silakan isi NISN atau NIP/Username kamu!');
-      return;
-    }
 
     const trimmed = usernameInput.trim().toLowerCase();
     const matchedUser = users.find(
@@ -94,15 +84,15 @@ export const LoginView: React.FC<LoginViewProps> = ({
 
     if (matchedUser) {
       if (selectedRole === 'siswa' && matchedUser.role !== 'siswa') {
-        setErrorMessage('Akun ini terdaftar sebagai Guru/Kepsek. Silakan ganti tab ke GURU/KEPSEK.');
+        setErrorMessage('Akun ini terdaftar sebagai Guru/Kepsek. Silakan pilih tab Guru / Kepsek.');
         return;
       }
       if (selectedRole === 'guru_kepsek' && matchedUser.role === 'siswa') {
-        setErrorMessage('Akun ini terdaftar sebagai Siswa. Silakan ganti tab ke SISWA.');
+        setErrorMessage('Akun ini terdaftar sebagai Siswa. Silakan pilih tab Siswa.');
         return;
       }
-      showToast(`Selamat datang, ${matchedUser.name}! Mengarahkan ke portal...`);
-      setTimeout(() => onLogin(matchedUser), 600);
+      showToast(`Selamat datang, ${matchedUser.name}!`);
+      setTimeout(() => onLogin(matchedUser), 400);
     } else {
       // Auto-create demo user
       const newDemoUser: User = {
@@ -110,103 +100,89 @@ export const LoginView: React.FC<LoginViewProps> = ({
         name: usernameInput,
         username: usernameInput,
         role: selectedRole === 'siswa' ? 'siswa' : 'guru',
-        class: selectedRole === 'siswa' ? 'Kelas 5 A' : 'Kelas 5 A',
+        class: 'Kelas 5 A',
         points: 20,
         isOnline: true,
       };
       showToast(`Selamat datang, ${newDemoUser.name}!`);
-      setTimeout(() => onLogin(newDemoUser), 600);
+      setTimeout(() => onLogin(newDemoUser), 400);
     }
   };
 
   // Quick Demo Login Handler
-  const handleQuickDemo = (userId: string, role: 'siswa' | 'guru_kepsek', label: string) => {
+  const handleQuickDemo = (userId: string, role: 'siswa' | 'guru_kepsek') => {
     setSelectedRole(role);
     const user = users.find((u) => u.id === userId);
     if (user) {
       setUsernameInput(user.username);
       setPasswordInput('******');
-      showToast(`Akun ${user.name} dipilih! Klik Masuk.`);
-    } else {
-      showToast(`Memilih akun demo ${label}...`);
+      onLogin(user);
     }
   };
 
   return (
-    <div className="min-h-screen bg-bright-yellow-blue text-slate-900 dark:text-slate-100 font-sans relative overflow-x-hidden p-3 md:p-6 pb-12 flex flex-col items-center transition-colors duration-300">
-      {/* Background Decorative Blur Blobs */}
-      <div className="absolute -top-16 -left-16 w-64 h-64 bg-yellow-300/60 dark:bg-amber-900/40 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute top-96 -right-16 w-72 h-72 bg-sky-300/60 dark:bg-sky-900/40 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="absolute bottom-20 left-10 w-64 h-64 bg-blue-400/50 dark:bg-blue-900/30 rounded-full blur-3xl pointer-events-none -z-10" />
-
-      <div className="w-full max-w-4xl space-y-5">
-        {/* Top Real-time Dynamic Ribbon */}
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans p-4 sm:p-6 pb-12 flex flex-col items-center justify-center transition-colors">
+      <div className="w-full max-w-4xl space-y-6">
+        {/* Top Header */}
         <header className="flex items-center justify-between gap-2 py-1">
-          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3.5 py-1.5 rounded-full border-brutal-sm shadow-brutal-sm text-xs font-bold text-slate-800 dark:text-slate-200">
+          <div className="flex items-center gap-2 bg-white dark:bg-slate-900 px-3.5 py-1.5 rounded-full border border-slate-200/80 dark:border-slate-800 shadow-sm text-xs font-semibold text-slate-700 dark:text-slate-300">
             <span className="text-emerald-500">👋</span>
-            <span>Selamat Pagi, Sahabat Hebat!</span>
+            <span>Selamat Datang di Portal Pembiasaan</span>
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Theme Switcher Button */}
             <button
               type="button"
               onClick={toggleTheme}
-              className="flex items-center gap-1.5 bg-yellow-300 dark:bg-slate-800 text-slate-900 dark:text-yellow-300 px-3 py-1.5 rounded-full border-brutal-sm shadow-brutal-sm text-xs font-black transition-all hover:scale-105 active:scale-95"
+              className="flex items-center gap-1.5 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-800 shadow-sm text-xs font-medium transition-colors"
             >
-              {isDarkTheme ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+              {isDarkTheme ? <Sun className="w-3.5 h-3.5 text-amber-400" /> : <Moon className="w-3.5 h-3.5" />}
               <span>{isDarkTheme ? 'Terang' : 'Gelap'}</span>
             </button>
 
-            <div className="flex items-center gap-2 bg-emerald-400 text-slate-900 px-3.5 py-1.5 rounded-full border-brutal-sm shadow-brutal-sm text-xs font-black">
-              <Clock className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 px-3 py-1.5 rounded-full border border-sky-200 dark:border-sky-800 text-xs font-medium">
+              <Clock className="w-3.5 h-3.5 text-sky-600" />
               <span>{currentTime || '07:15 WIB'}</span>
             </div>
           </div>
         </header>
 
-        {/* School Branding & Crest */}
+        {/* School Branding */}
         <section className="flex flex-col items-center text-center my-2">
-          <div className="relative flex items-center justify-center w-20 h-20 md:w-24 md:h-24 bg-white dark:bg-slate-900 rounded-full border-brutal shadow-brutal mb-3 p-1">
+          <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm mb-3 p-2 flex items-center justify-center">
             <img
-              src={schoolInfo.logo3Url || schoolInfo.logo1Url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuAGCY4oHhmgg9yt8rQ7TF4rAPMmwNnNRCGhYF7O8XSER9vcYZd7SvylUpMPuYePHEhIhi-1CF67oa8fmo4K_-1T9ZSzIyPsy5OdLdZQheqOKejKrhEgWmVcw_YMiXG6KBR_Hitit1F5LLcXfn5gMI3Y2rdgiWNGLNprl_5h8CO-D0og2J9zNt7uFYoUekzwWxb2sLJFIL060NCi8a9HZCuZLoz-2lnWZ907l7UuEx-95S0UeHluDavQtA'}
+              src={schoolInfo.logo1Url || 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg/200px-Logo_of_Ministry_of_Education_and_Culture_of_Republic_of_Indonesia.svg.png'}
               alt={schoolInfo.schoolName}
-              className="w-full h-full object-contain rounded-full"
+              className="w-full h-full object-contain"
             />
-            <span className="absolute bottom-0 right-0 flex items-center justify-center w-7 h-7 bg-emerald-400 text-slate-900 rounded-full border-brutal-sm shadow-sm">
-              <BadgeCheck className="w-4 h-4 fill-emerald-800 text-white" />
-            </span>
           </div>
 
-          <h1 className="text-xl md:text-2xl font-black font-heading text-slate-900 dark:text-white uppercase tracking-wide">
+          <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight">
             {schoolInfo.schoolName || 'UPTD SATDIK SDN SUMBEREJO 04'}
           </h1>
 
-          <div className="mt-1 bg-amber-100 dark:bg-amber-950/80 border-2 border-amber-400 px-4 py-1 rounded-full shadow-sm">
-            <p className="text-xs md:text-sm font-black text-amber-900 dark:text-amber-300">
-              🌟 Portal Karakter & 7 Kebiasaan Anak Indonesia Hebat
-            </p>
-          </div>
+          <p className="text-xs md:text-sm text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+            Portal 7 Kebiasaan Anak Indonesia Hebat
+          </p>
         </section>
 
-        {/* Main 2-Column Section: Video Pembiasaan + Pintu Masuk Card */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* Left Column: Video Pembiasaan Card */}
-          <section className="lg:col-span-6 bg-white dark:bg-slate-900 border-brutal shadow-brutal rounded-3xl p-4">
-            <div className="flex items-center justify-between mb-3">
+        {/* Main 2-Column Section: Video + Login Form */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          {/* Left Column: Video */}
+          <section className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="flex items-center justify-center w-7 h-7 bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-400 rounded-full border-brutal-sm">
+                <span className="flex items-center justify-center w-7 h-7 bg-sky-50 dark:bg-sky-950 text-sky-600 rounded-lg">
                   <Tv className="w-4 h-4" />
                 </span>
-                <span className="font-black text-sm text-slate-900 dark:text-white">Video Pembiasaan Pagi</span>
+                <span className="font-bold text-sm text-slate-900 dark:text-white">Video Panduan Senam</span>
               </div>
-              <span className="text-[10px] bg-amber-300 text-slate-900 font-black px-2.5 py-0.5 rounded-full border-brutal-sm">
+              <span className="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold px-2 py-0.5 rounded-md">
                 Kemendikdasmen
               </span>
             </div>
 
-            {/* Interactive Video Box */}
-            <div className="relative w-full aspect-video rounded-2xl overflow-hidden border-brutal bg-slate-900 group shadow-sm">
+            <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-950 group">
               {isPlayingVideo ? (
                 <iframe
                   className="w-full h-full"
@@ -228,29 +204,25 @@ export const LoginView: React.FC<LoginViewProps> = ({
                     alt="Senam Pagi"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />
+                  <div className="absolute inset-0 bg-slate-950/40" />
 
-                  {/* Ripple Play Button */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="relative flex items-center justify-center">
-                      <div className="absolute w-14 h-14 bg-emerald-400/50 rounded-full animate-ping" />
-                      <div className="w-12 h-12 bg-emerald-400 text-slate-900 rounded-full border-brutal-sm flex items-center justify-center shadow-lg transition-transform active:scale-95 group-hover:scale-110">
-                        <Play className="w-6 h-6 fill-slate-900 ml-0.5" />
-                      </div>
+                    <div className="w-12 h-12 bg-white/90 text-slate-900 rounded-full flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+                      <Play className="w-5 h-5 fill-slate-900 ml-0.5" />
                     </div>
                   </div>
 
                   <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between">
                     <div>
-                      <p className="text-xs font-black text-white drop-shadow">
-                        Senam Pagi Anak Indonesia Hebat 2025
+                      <p className="text-xs font-semibold text-white drop-shadow">
+                        Senam Anak Indonesia Hebat
                       </p>
-                      <span className="text-[10px] text-yellow-300 font-extrabold flex items-center gap-1">
+                      <span className="text-[10px] text-slate-200 flex items-center gap-1">
                         <Clock className="w-3 h-3" /> 3 Menit Pembiasaan
                       </span>
                     </div>
-                    <span className="bg-yellow-300 text-slate-900 font-black text-[10px] px-2.5 py-0.5 rounded-full border-brutal-sm shadow">
-                      Putar Video
+                    <span className="bg-sky-600 text-white font-semibold text-[10px] px-2.5 py-1 rounded-lg">
+                      Putar
                     </span>
                   </div>
                 </div>
@@ -258,61 +230,54 @@ export const LoginView: React.FC<LoginViewProps> = ({
             </div>
           </section>
 
-          {/* Right Column: Login Main Interactive Card ("Pintu Masuk Petualangan") */}
-          <section className="lg:col-span-6 bg-white dark:bg-slate-900 border-brutal shadow-brutal-lg rounded-3xl p-5 relative">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-2xl animate-bounce">🚀</span>
-              <h2 className="text-xl font-black font-heading text-slate-900 dark:text-white">
-                Pintu Masuk Petualangan
-              </h2>
-            </div>
-            <p className="text-xs font-bold text-slate-600 dark:text-slate-400 mb-4">
-              Yuk masuk untuk catat 7 kebiasaan hebatmu hari ini!
+          {/* Right Column: Login Card */}
+          <section className="lg:col-span-6 bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-6 relative">
+            <h2 className="text-base font-bold text-slate-900 dark:text-white">
+              Masuk ke Portal
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4 mt-0.5">
+              Silakan masuk untuk memantau atau melaporkan pembiasaan karakter.
             </p>
 
-            {/* Role Toggle Pill Switcher */}
-            <div className="grid grid-cols-2 p-1.5 bg-slate-100 dark:bg-slate-950 border-brutal-sm rounded-2xl mb-4 gap-1">
+            {/* Role Toggle */}
+            <div className="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl mb-4 gap-1">
               <button
                 type="button"
                 onClick={() => setSelectedRole('siswa')}
-                className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 rounded-lg font-semibold text-xs transition-all ${
                   selectedRole === 'siswa'
-                    ? 'bg-emerald-400 text-slate-900 border-brutal-sm shadow-brutal-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-slate-900 text-sky-700 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <span>🎒 SISWA</span>
+                Siswa
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedRole('guru_kepsek')}
-                className={`py-2 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 ${
+                className={`py-2 rounded-lg font-semibold text-xs transition-all ${
                   selectedRole === 'guru_kepsek'
-                    ? 'bg-yellow-300 text-slate-900 border-brutal-sm shadow-brutal-sm'
-                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                    ? 'bg-white dark:bg-slate-900 text-sky-700 dark:text-white shadow-sm'
+                    : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <span>👩‍🏫 GURU / KEPSEK</span>
+                Guru / Kepsek
               </button>
             </div>
 
             {/* Error Message */}
             {errorMessage && (
-              <div className="p-2.5 mb-3 bg-red-100 dark:bg-red-950/80 border-2 border-red-500 rounded-xl text-xs font-bold text-red-800 dark:text-red-300">
+              <div className="p-3 mb-3 bg-rose-50 dark:bg-rose-950/50 border border-rose-200 dark:border-rose-900 rounded-xl text-xs font-semibold text-rose-700 dark:text-rose-300">
                 ⚠️ {errorMessage}
               </div>
             )}
 
-            {/* Input Form */}
-            <form onSubmit={handleLoginSubmit} className="space-y-3">
+            {/* Form */}
+            <form onSubmit={handleLoginSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-black text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1">
-                  <UserCheck className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>
-                    {selectedRole === 'siswa'
-                      ? 'Nomor Induk Siswa Nasional (NISN)'
-                      : 'NIP / ID Pendidik'}
-                  </span>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5 text-sky-600" />
+                  <span>{selectedRole === 'siswa' ? 'Nomor Induk Siswa (NISN) / Nama' : 'Username / NIP Pendidik'}</span>
                 </label>
                 <input
                   type="text"
@@ -321,31 +286,31 @@ export const LoginView: React.FC<LoginViewProps> = ({
                   placeholder={
                     selectedRole === 'siswa'
                       ? 'Contoh: 0129384756 (atau Reza)'
-                      : 'Contoh: 198402122010012004 (atau Didin)'
+                      : 'Contoh: guru_didin (atau Didin)'
                   }
                   required
-                  className="w-full p-3 bg-slate-50 dark:bg-slate-950 border-brutal-sm rounded-2xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-400"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-black text-slate-800 dark:text-slate-200 mb-1 flex items-center gap-1">
-                  <Lock className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>Kata Sandi Rahasia</span>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1 flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-sky-600" />
+                  <span>Kata Sandi</span>
                 </label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     value={passwordInput}
                     onChange={(e) => setPasswordInput(e.target.value)}
-                    placeholder="Ketik kata sandi..."
+                    placeholder="Masukkan kata sandi..."
                     required
-                    className="w-full p-3 pr-10 bg-slate-50 dark:bg-slate-950 border-brutal-sm rounded-2xl text-xs font-bold text-slate-900 dark:text-white focus:outline-none focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-emerald-400"
+                    className="w-full px-3.5 py-2.5 pr-10 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-sky-500/20 focus:border-sky-500"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-800 dark:hover:text-white"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -356,155 +321,133 @@ export const LoginView: React.FC<LoginViewProps> = ({
                 <button
                   type="button"
                   onClick={() =>
-                    showToast('Hubungi Wali Kelasmu di SDN Sumberejo 04 untuk reset sandi.')
+                    showToast('Silakan hubungi Wali Kelas / Operator SDN Sumberejo 04 untuk informasi akun.')
                   }
-                  className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline flex items-center gap-1"
+                  className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:underline flex items-center gap-1"
                 >
-                  <HelpCircle className="w-3 h-3" /> Lupa NISN? Tanya Wali Kelas
+                  <HelpCircle className="w-3 h-3" /> Butuh bantuan login?
                 </button>
               </div>
 
-              {/* Primary Action Button */}
               <button
                 type="submit"
-                className="w-full py-3 bg-emerald-400 hover:bg-emerald-500 text-slate-900 rounded-full font-black text-sm border-brutal shadow-brutal active:scale-95 transition-all flex items-center justify-center gap-2 mt-2"
+                className="w-full py-2.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl font-semibold text-xs shadow-sm transition-colors flex items-center justify-center gap-1.5 mt-2"
               >
-                <span>MASUK SEKARANG</span>
+                <span>Masuk ke Portal</span>
                 <LogIn className="w-4 h-4" />
               </button>
             </form>
           </section>
         </div>
 
-        {/* Quick Access Demo Users Pill Grid */}
-        <section className="bg-slate-100 dark:bg-slate-900 border-brutal shadow-brutal-sm rounded-2xl p-4">
+        {/* Quick Demo Access Grid */}
+        <section className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-4">
           <div className="flex items-center gap-1.5 mb-3">
-            <Zap className="w-4 h-4 text-amber-500 fill-amber-400" />
-            <h3 className="text-xs font-black text-slate-900 dark:text-slate-100 uppercase tracking-wide">
-              Akses Cepat (Akun Uji Coba Demo)
+            <Zap className="w-4 h-4 text-sky-600" />
+            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">
+              Akses Cepat Uji Coba (Pilih Akun Demo)
             </h3>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {/* Demo 1 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             <button
               type="button"
-              onClick={() => handleQuickDemo('s1', 'siswa', 'Reza Rahadian')}
-              className="flex items-center gap-2.5 p-2 bg-white dark:bg-slate-800 rounded-xl border-brutal-sm shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-left"
+              onClick={() => handleQuickDemo('s1', 'siswa')}
+              className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-sky-300 transition-colors text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-sky-200 dark:bg-sky-900 text-slate-900 dark:text-white border-brutal-sm flex items-center justify-center font-black text-xs">
-                👦
+              <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 font-bold flex items-center justify-center text-xs">
+                R
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">Reza Rahadian</p>
-                <span className="text-[10px] font-extrabold text-emerald-700 dark:text-emerald-400 block truncate">
-                  Kelas 5 A (Siswa)
-                </span>
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Reza Rahadian</p>
+                <span className="text-[10px] text-slate-500 block truncate">Siswa (5A)</span>
               </div>
             </button>
 
-            {/* Demo 2 */}
             <button
               type="button"
-              onClick={() => handleQuickDemo('s2', 'siswa', 'Aisyah Putri')}
-              className="flex items-center gap-2.5 p-2 bg-white dark:bg-slate-800 rounded-xl border-brutal-sm shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-left"
+              onClick={() => handleQuickDemo('s2', 'siswa')}
+              className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-sky-300 transition-colors text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-amber-200 dark:bg-amber-900 text-slate-900 dark:text-white border-brutal-sm flex items-center justify-center font-black text-xs">
-                👧
+              <div className="w-8 h-8 rounded-lg bg-sky-100 text-sky-700 font-bold flex items-center justify-center text-xs">
+                V
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">Revandito</p>
-                <span className="text-[10px] font-extrabold text-amber-700 dark:text-amber-400 block truncate">
-                  Kelas 5 A (Siswa)
-                </span>
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Revandito</p>
+                <span className="text-[10px] text-slate-500 block truncate">Siswa (5A)</span>
               </div>
             </button>
 
-            {/* Demo 3 */}
             <button
               type="button"
-              onClick={() => handleQuickDemo('g1', 'guru_kepsek', 'Didin Eka')}
-              className="flex items-center gap-2.5 p-2 bg-white dark:bg-slate-800 rounded-xl border-brutal-sm shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-left"
+              onClick={() => handleQuickDemo('t1', 'guru_kepsek')}
+              className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-sky-300 transition-colors text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-emerald-200 dark:bg-emerald-900 text-slate-900 dark:text-white border-brutal-sm flex items-center justify-center font-black text-xs">
-                👩‍🏫
+              <div className="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 font-bold flex items-center justify-center text-xs">
+                D
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">Didin Eka</p>
-                <span className="text-[10px] font-extrabold text-sky-700 dark:text-sky-400 block truncate">
-                  Wali Kelas 5 A
-                </span>
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Pak Didin S.Pd</p>
+                <span className="text-[10px] text-slate-500 block truncate">Guru Wali Kelas</span>
               </div>
             </button>
 
-            {/* Demo 4 */}
             <button
               type="button"
-              onClick={() => handleQuickDemo('a1', 'guru_kepsek', 'Kepala Sekolah')}
-              className="flex items-center gap-2.5 p-2 bg-white dark:bg-slate-800 rounded-xl border-brutal-sm shadow-sm hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors text-left"
+              onClick={() => handleQuickDemo('admin1', 'guru_kepsek')}
+              className="flex items-center gap-2.5 p-2 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-sky-300 transition-colors text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-purple-200 dark:bg-purple-900 text-slate-900 dark:text-white border-brutal-sm flex items-center justify-center font-black text-xs">
-                🏛️
+              <div className="w-8 h-8 rounded-lg bg-purple-100 text-purple-700 font-bold flex items-center justify-center text-xs">
+                K
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-black text-slate-900 dark:text-white truncate">Kepala Sekolah</p>
-                <span className="text-[10px] font-extrabold text-purple-700 dark:text-purple-400 block truncate">
-                  Admin Evaluator
-                </span>
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">Kepala Sekolah</p>
+                <span className="text-[10px] text-slate-500 block truncate">Administrator</span>
               </div>
             </button>
           </div>
         </section>
 
-        {/* 7 Habits Micro Badge Marquee Strip */}
-        <section className="flex flex-col gap-1.5 pt-1">
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase">
-              Tujuh Kebiasaan Utama Hari Ini
-            </span>
-            <span className="text-[11px] font-black text-emerald-600 dark:text-emerald-400">
-              100% Karakter Unggul
-            </span>
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto py-2 no-scrollbar">
+        {/* 7 Habits Preview Pills */}
+        <section className="bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm rounded-2xl p-4">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
+            Target 7 Pembiasaan Karakter Anak Indonesia Hebat
+          </span>
+          <div className="flex items-center gap-2 overflow-x-auto py-1">
             {[
-              { emoji: '🌅', label: 'Bangun Pagi' },
-              { emoji: '🤲', label: 'Beribadah' },
-              { emoji: '🏃', label: 'Berolahraga' },
-              { emoji: '📖', label: 'Gemar Belajar' },
-              { emoji: '🍎', label: 'Makan Sehat' },
-              { emoji: '🤝', label: 'Bermasyarakat' },
-              { emoji: '😴', label: 'Tidur Cepat' },
+              { emoji: '🌅', label: '1. Bangun Pagi' },
+              { emoji: '🤲', label: '2. Beribadah' },
+              { emoji: '🏃', label: '3. Berolahraga' },
+              { emoji: '🍎', label: '4. Makan Sehat' },
+              { emoji: '📖', label: '5. Gemar Belajar' },
+              { emoji: '🤝', label: '6. Bermasyarakat' },
+              { emoji: '😴', label: '7. Tidur Tepat Waktu' },
             ].map((item, idx) => (
               <div
                 key={idx}
-                className="flex-shrink-0 flex items-center gap-1.5 bg-white dark:bg-slate-800 border-brutal-sm px-3 py-1.5 rounded-full shadow-sm"
+                className="shrink-0 flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-3 py-1.5 rounded-full text-xs font-medium text-slate-700 dark:text-slate-300"
               >
-                <span className="text-sm">{item.emoji}</span>
-                <span className="text-[11px] font-black text-slate-900 dark:text-white">{item.label}</span>
+                <span>{item.emoji}</span>
+                <span>{item.label}</span>
               </div>
             ))}
           </div>
         </section>
 
         <footer className="text-center pt-2">
-          <p className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-400">
             Kemendikdasmen • UPTD Satdik SDN Sumberejo 04
           </p>
         </footer>
       </div>
 
-      {/* Interactive Toast Modal Notification */}
+      {/* Toast Notification */}
       {toastMessage && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 dark:bg-slate-800 text-white border-2 border-emerald-400 px-4 py-2.5 rounded-2xl shadow-2xl z-50 flex items-center gap-3 animate-bounce">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-          <span className="text-xs font-black">{toastMessage}</span>
-          <button
-            onClick={() => setToastMessage(null)}
-            className="text-slate-400 hover:text-white ml-2"
-          >
-            <X className="w-4 h-4" />
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-4 py-2 rounded-xl shadow-lg z-50 flex items-center gap-2 text-xs font-semibold animate-fadeIn border border-slate-700">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <span>{toastMessage}</span>
+          <button onClick={() => setToastMessage(null)} className="ml-2 text-slate-400 hover:text-white">
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
